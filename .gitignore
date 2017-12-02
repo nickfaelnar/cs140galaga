@@ -2,3 +2,10 @@
 .classpath
 .project
 .settings/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
