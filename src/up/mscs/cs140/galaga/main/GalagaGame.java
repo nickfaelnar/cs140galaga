@@ -21,6 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import up.mscs.cs140.galaga.constants.Constants;
+import up.mscs.cs140.galaga.panels.GameScreen;
 import up.mscs.cs140.galaga.panels.InitScreen;
 
 /**
@@ -29,10 +30,12 @@ import up.mscs.cs140.galaga.panels.InitScreen;
 public class GalagaGame extends JFrame implements KeyListener {
 
 	private InitScreen initScreen;
+	private GameScreen gameScreen;
 	
 	public GalagaGame() {
 		super(Constants.GAME_NAME);
 		prepareInitialScreen();
+		prepareGameScreen();
 		
 		setLayout(new BorderLayout());
 		setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
@@ -53,6 +56,13 @@ public class GalagaGame extends JFrame implements KeyListener {
 		initScreen.setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
 		initScreen.setFocusable(false);
 	}
+	
+	public void prepareGameScreen() {
+		gameScreen = new GameScreen();
+		gameScreen.setLayout(new BorderLayout());
+		gameScreen.setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
+		gameScreen.setFocusable(true);
+	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
@@ -60,6 +70,11 @@ public class GalagaGame extends JFrame implements KeyListener {
 		System.out.println(key);
 		if (key == KeyEvent.VK_SPACE) {
 			remove(initScreen);
+			setFocusable(false);
+			repaint();
+			add(gameScreen);
+			gameScreen.requestFocus();
+			repaint();
 		}
 		
 	}
