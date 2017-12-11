@@ -67,7 +67,6 @@ public class GalagaGame extends JFrame implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
-		System.out.println(key);
 		if (key == KeyEvent.VK_SPACE) {
 			remove(initScreen);
 			setFocusable(false);

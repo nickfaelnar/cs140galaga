@@ -1,31 +1,44 @@
 package up.mscs.cs140.galaga.objects;
 
+import java.awt.Image;
+
+import javax.swing.ImageIcon;
+
 import up.mscs.cs140.galaga.constants.Constants;
+import up.mscs.cs140.galaga.constants.Coordinate;
+import up.mscs.cs140.galaga.constants.GameObject;
 
 /**
  * Battle Ship Object.
  */
-public class BattleShip {
-
-	private String imagePath = Constants.BATTLESHIP_IMG_PATH;
-	private int xCoor;
-	private int yCoor;
+public class BattleShip extends GameObject {
 	
-	public BattleShip(int xCoor, int yCoor) {
-		this.xCoor = xCoor;
-		this.yCoor = yCoor;
+	public BattleShip(Coordinate coordinate) {
+		super(coordinate, Constants.BATTLE_SHIP_DELTA_X, Constants.BATTLE_SHIP_DELTA_Y);
+	}
+
+	@Override
+	protected void loadImage() {
+		this.imagePath = new ImageIcon(getClass().getClassLoader().getResource(Constants.BATTLE_SHIP_SPRITE)).getImage();
+	}
+
+	@Override
+	public void moveLeft() {
+		this.coordinate.setX(this.coordinate.getX() - this.deltaX);
+	}
+
+	@Override
+	public void moveRight() {
+		this.coordinate.setX(this.coordinate.getX() + this.deltaX);
 	}
 	
-	public int getxCoor() {
-		return xCoor;
+	public boolean canMoveLeft() {
+		return (this.coordinate.getX() > 10);
+	}
+	
+	public boolean canMoveRight() {
+		return (this.coordinate.getX() < 740);
 	}
 
-	public void setxCoor(int xCoor) {
-		this.xCoor = xCoor;
-	}
-
-	public int getyCoor() {
-		return yCoor;
-	}
 
 }

@@ -1,35 +1,39 @@
 package up.mscs.cs140.galaga.objects;
 
+import javax.swing.ImageIcon;
+
 import up.mscs.cs140.galaga.constants.Constants;
+import up.mscs.cs140.galaga.constants.Coordinate;
+import up.mscs.cs140.galaga.constants.GameObject;
 
 /**
  * Enemy Alien Object.
  */
-public class Alien {
+public class Alien extends GameObject {
 	
-	private String imagePath = Constants.ALIEN_IMG_PATH;
-	private int xCoor = 0;
-	private int yCoor = 0;
-	
-	public Alien(int xCoor, int yCoor) {
-		this.xCoor = xCoor;
-		this.yCoor = yCoor;
+	public Alien(Coordinate coordinate) {
+		super(coordinate, Constants.ALIEN_DELTA_X, Constants.ALIEN_DELTA_Y);
+	}
+
+	@Override
+	protected void loadImage() {
+		this.imagePath = new ImageIcon(getClass().getClassLoader().getResource(Constants.ALIEN_SPRITE)).getImage();
+	}
+
+	@Override
+	public void moveLeft() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void moveRight() {
+		// TODO Auto-generated method stub
+		
 	}
 	
-	public int getPositionX() {
-		return xCoor;
-	}
-	
-	public void setPositionX(int positionX) {
-		this.xCoor = positionX;
-	}
-	
-	public int getPositionY() {
-		return yCoor;
-	}
-	
-	public void setPositionY(int positionY) {
-		this.yCoor = positionY;
+	public void moveForward() {
+		
 	}
 
 }
