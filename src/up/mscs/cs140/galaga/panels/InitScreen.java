@@ -15,6 +15,8 @@ import up.mscs.cs140.galaga.constants.Constants;
 
 public class InitScreen extends JPanel {
 	
+	private static final long serialVersionUID = 1L;
+	
 	private Image bgImage;
 	private Image titleImage;
 	

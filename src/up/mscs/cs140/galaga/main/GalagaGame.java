@@ -47,7 +47,6 @@ public class GalagaGame extends JFrame implements KeyListener {
 		repaint();
 		add(initScreen, BorderLayout.CENTER);
 		requestFocus();
-		System.out.println(getFocusOwner());
 	}
 	
 	public void prepareInitialScreen() {
@@ -73,6 +72,7 @@ public class GalagaGame extends JFrame implements KeyListener {
 			repaint();
 			add(gameScreen);
 			gameScreen.requestFocus();
+			gameScreen.startGame();
 			repaint();
 		}
 		

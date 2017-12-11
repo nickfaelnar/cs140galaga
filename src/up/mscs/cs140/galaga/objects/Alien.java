@@ -22,18 +22,26 @@ public class Alien extends GameObject {
 
 	@Override
 	public void moveLeft() {
-		// TODO Auto-generated method stub
+		this.coordinate.setX(this.coordinate.getX() - this.deltaX);
 		
 	}
 
 	@Override
 	public void moveRight() {
-		// TODO Auto-generated method stub
+		this.coordinate.setX(this.coordinate.getX() + this.deltaX);
 		
 	}
 	
 	public void moveForward() {
-		
+		this.coordinate.setY(this.coordinate.getY() + this.deltaY);
+	}
+	
+	public boolean canMoveLeft() {
+		return (this.coordinate.getX() > 10);
+	}
+	
+	public boolean canMoveRight() {
+		return (this.coordinate.getX() < 740);
 	}
 
 }
