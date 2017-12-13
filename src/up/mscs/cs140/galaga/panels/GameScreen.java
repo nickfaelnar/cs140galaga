@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -30,12 +31,12 @@ public class GameScreen extends JPanel implements KeyListener {
 	
 	private BattleShip battleShip;
 	
-	private List<Alien> aliens = Collections.synchronizedList(new ArrayList<Alien>());
+	private List<Alien> aliens;
 	private AlienMovement currMovement;
 	private AlienMovement prevSideMovement;
 	private int alienSpeed = Constants.ALIEN_INIT_SPEED;
 	
-	private List<Missile> missiles = Collections.synchronizedList(new ArrayList<Missile>());
+	private List<Missile> missiles;
 	private int missileSpeed = Constants.MISSILE_INIT_SPEED;
 	
 	private GameState currState;
@@ -45,11 +46,26 @@ public class GameScreen extends JPanel implements KeyListener {
 	Thread gameWatcher;
 	
 	public GameScreen() {
-		loadGameBoard();
 		addKeyListener(this);
 	}
 	
+	public void startGame() {
+		loadGameBoard();
+		
+		currState = GameState.ACTIVE;
+		currMovement = AlienMovement.LEFT;
+		prevSideMovement = currMovement;
+		
+		alienThread.start();
+		missileThread.start();
+		gameWatcher.start();
+	}
+	
+	
 	private void loadGameBoard() {
+		removeAll();
+		revalidate();
+		
 		//Background
 	    bgImage = new ImageIcon(getClass().getClassLoader().getResource(Constants.GAME_SCREEN_BG)).getImage();
 	    
@@ -57,18 +73,15 @@ public class GameScreen extends JPanel implements KeyListener {
 	    battleShip = new BattleShip(new Coordinate(Constants.BATTLE_SHIP_INIT_X, Constants.BATTLE_SHIP_INIT_Y));
 	    
 	    //Aliens
+	    aliens = Collections.synchronizedList(new ArrayList<Alien>());
 	    loadAliens();
+	    
+	    //Missiles
+	    missiles = Collections.synchronizedList(new ArrayList<Missile>());
+	    
 	    prepareAlienThread();
 	    prepareMissileThread();
-	}
-	
-	public void startGame() {
-		currState = GameState.ACTIVE;
-		currMovement = AlienMovement.LEFT;
-		prevSideMovement = currMovement;
-		
-		alienThread.start();
-		missileThread.start();
+	    prepareGameWatcher();
 	}
 	
 	private void prepareAlienThread() {
@@ -83,23 +96,16 @@ public class GameScreen extends JPanel implements KeyListener {
 					}
 					switch(currMovement) {
 						case LEFT:
-							if (canAlienMoveToLeft()) {
-								moveAliensLeft();
-								repaint();
-							} else {
-								currMovement = AlienMovement.FORWARD;
-							}
-							break;
 						case RIGHT:
-							if (canAlienMoveToRight()) {
-								moveAliensRight();
+							if (canAlienMoveToSide(currMovement)) {
+								moveAliens(currMovement);
 								repaint();
 							} else {
 								currMovement = AlienMovement.FORWARD;
 							}
 							break;
 						case FORWARD:
-							moveAliensForward();
+							moveAliens(AlienMovement.FORWARD);
 							currMovement = (AlienMovement.LEFT.equals(prevSideMovement)) ? AlienMovement.RIGHT : AlienMovement.LEFT;
 							prevSideMovement = currMovement;
 							repaint();
@@ -153,44 +159,32 @@ public class GameScreen extends JPanel implements KeyListener {
 		return aliens.isEmpty();
 	}
 	
-	private boolean canAlienMoveToLeft() {
-		for (Alien alien : aliens) {
-			if (!alien.canMoveLeft() && alien.isAlive()) {
-				return false;
+	private boolean canAlienMoveToSide(AlienMovement movement) {
+		synchronized (aliens) {
+			for (Alien alien : aliens) {
+				boolean canMove = (AlienMovement.LEFT.equals(movement)) ? alien.canMoveLeft() : alien.canMoveRight();
+				if (!canMove && alien.isAlive()) {
+					return false;
+				}
 			}
-		}
-		return true;
-	}
-	
-	private boolean canAlienMoveToRight() {
-		for (Alien alien : aliens) {
-			if (!alien.canMoveRight() && alien.isAlive()) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private void moveAliensLeft() {
-		for (Alien alien : aliens) {
-			if (alien.isAlive()) {
-				alien.moveLeft();
-			}
+			return true;
 		}
 	}
 	
-	private void moveAliensRight() {
-		for (Alien alien : aliens) {
-			if (alien.isAlive()) {
-				alien.moveRight();
-			}
-		}
-	}
-	
-	private void moveAliensForward() {
-		for (Alien alien : aliens) {
-			if (alien.isAlive()) {
-				alien.moveForward();
+	private void moveAliens(AlienMovement alienMovement) {
+		synchronized (aliens) {
+			for (Alien alien : aliens) {
+				switch (alienMovement) {
+				case LEFT:
+					alien.moveLeft();
+					break;
+				case RIGHT:
+					alien.moveRight();
+					break;
+				case FORWARD:
+					alien.moveForward();
+					break;
+				}
 			}
 		}
 	}
@@ -201,8 +195,9 @@ public class GameScreen extends JPanel implements KeyListener {
 			if (!hasHitAlien(missile) && !isOutOfScreen(missile)) {
 				missile.moveForward();
 			} else {
+				synchronized (missiles) {
 					it.remove();
-			}
+				}			}
 		}
 	}
 	
@@ -213,7 +208,9 @@ public class GameScreen extends JPanel implements KeyListener {
 			Alien alien = it.next();
 			if (alien.isAlive() && missileX >= alien.getCoordinate().getX() && missileX <= (alien.getCoordinate().getX() + Constants.ALIEN_WIDTH)
 					&& missileY > alien.getCoordinate().getY() && missileY < (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT)) {
-					it.remove();
+					synchronized (aliens) {
+						it.remove();
+					}
 				return true;
 			}
 		}
@@ -249,12 +246,16 @@ public class GameScreen extends JPanel implements KeyListener {
         
     	g.drawImage(battleShip.getImagePath(), battleShip.getCoordinate().getX(), battleShip.getCoordinate().getY(), Constants.BATTLE_SHIP_WIDTH, Constants.BATTLE_SHIP_HEIGHT, this);
         
-        for (Alien alien : aliens) {
-        	g.drawImage(alien.getImagePath(), alien.getCoordinate().getX(), alien.getCoordinate().getY(), Constants.ALIEN_WIDTH, Constants.ALIEN_HEIGHT, this);
-        }
+    	synchronized (aliens) {
+	        for (Alien alien : aliens) {
+	        	g.drawImage(alien.getImagePath(), alien.getCoordinate().getX(), alien.getCoordinate().getY(), Constants.ALIEN_WIDTH, Constants.ALIEN_HEIGHT, this);
+	        }
+    	}
         
-        for (Missile missile : missiles) {
-        	g.drawImage(missile.getImagePath(), missile.getCoordinate().getX(), missile.getCoordinate().getY(), Constants.MISSILE_WIDTH, Constants.MISSILE_HEIGHT, this);
+        synchronized (missiles) {
+	        for (Missile missile : missiles) {
+	        	g.drawImage(missile.getImagePath(), missile.getCoordinate().getX(), missile.getCoordinate().getY(), Constants.MISSILE_WIDTH, Constants.MISSILE_HEIGHT, this);
+	        }
         }
     }
 
@@ -282,16 +283,10 @@ public class GameScreen extends JPanel implements KeyListener {
 	}
 
 	@Override
-	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void keyReleased(KeyEvent e) {}
 
 	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void keyTyped(KeyEvent e) {}
 	
 	public GameState getGameState() {
 		return currState;
