@@ -17,6 +17,15 @@ public class Alien extends GameObject {
 	public Alien(Coordinate coordinate) {
 		super(coordinate, Constants.ALIEN_DELTA_X, Constants.ALIEN_DELTA_Y);
 	}
+	
+	public boolean isAlive() {
+		return AlienState.ALIVE.equals(currState);
+	}
+	
+	public void kill() {
+		currState = AlienState.DEAD;
+		imagePath = new ImageIcon(getClass().getClassLoader().getResource(Constants.EXPLOSION_SPRITE)).getImage();
+	}
 
 	@Override
 	protected void loadImage() {

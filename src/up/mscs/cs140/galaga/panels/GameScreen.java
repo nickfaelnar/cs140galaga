@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,18 +30,19 @@ public class GameScreen extends JPanel implements KeyListener {
 	
 	private BattleShip battleShip;
 	
-	private List<Alien> aliens = new ArrayList<Alien>();
+	private List<Alien> aliens = Collections.synchronizedList(new ArrayList<Alien>());
 	private AlienMovement currMovement;
 	private AlienMovement prevSideMovement;
 	private int alienSpeed = Constants.ALIEN_INIT_SPEED;
 	
-	private List<Missile> missiles = new ArrayList<Missile>();
+	private List<Missile> missiles = Collections.synchronizedList(new ArrayList<Missile>());
 	private int missileSpeed = Constants.MISSILE_INIT_SPEED;
 	
 	private GameState currState;
 	
 	Thread alienThread;
 	Thread missileThread;
+	Thread gameWatcher;
 	
 	public GameScreen() {
 		loadGameBoard();
@@ -73,7 +75,7 @@ public class GameScreen extends JPanel implements KeyListener {
 		alienThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(true) {
+				while(GameState.ACTIVE.equals(currState)) {
 					try {
 						Thread.sleep(alienSpeed);
 					} catch (InterruptedException e) {
@@ -113,7 +115,7 @@ public class GameScreen extends JPanel implements KeyListener {
 		missileThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(true) {
+				while(GameState.ACTIVE.equals(currState)) {
 					try {
 						Thread.sleep(missileSpeed);
 					} catch (InterruptedException e) {
@@ -126,9 +128,34 @@ public class GameScreen extends JPanel implements KeyListener {
 		});
 	}
 	
+	private void prepareGameWatcher() {
+		gameWatcher = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while(true) {
+					try {
+						Thread.sleep(Constants.GAME_STATE_CHECK_INTERVAL);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					if (hasGameEnded()) {
+						currState = GameState.END;
+						System.out.println("You killed all the aliens! Hoorah!");
+						break;
+					}
+				}
+			}
+			
+		});
+	}
+	
+	private boolean hasGameEnded() {
+		return aliens.isEmpty();
+	}
+	
 	private boolean canAlienMoveToLeft() {
 		for (Alien alien : aliens) {
-			if (!alien.canMoveLeft()) {
+			if (!alien.canMoveLeft() && alien.isAlive()) {
 				return false;
 			}
 		}
@@ -137,7 +164,7 @@ public class GameScreen extends JPanel implements KeyListener {
 	
 	private boolean canAlienMoveToRight() {
 		for (Alien alien : aliens) {
-			if (!alien.canMoveRight()) {
+			if (!alien.canMoveRight() && alien.isAlive()) {
 				return false;
 			}
 		}
@@ -146,29 +173,35 @@ public class GameScreen extends JPanel implements KeyListener {
 	
 	private void moveAliensLeft() {
 		for (Alien alien : aliens) {
-			alien.moveLeft();
+			if (alien.isAlive()) {
+				alien.moveLeft();
+			}
 		}
 	}
 	
 	private void moveAliensRight() {
 		for (Alien alien : aliens) {
-			alien.moveRight();
+			if (alien.isAlive()) {
+				alien.moveRight();
+			}
 		}
 	}
 	
 	private void moveAliensForward() {
 		for (Alien alien : aliens) {
-			alien.moveForward();
+			if (alien.isAlive()) {
+				alien.moveForward();
+			}
 		}
 	}
 	
 	private void moveMissilesForward() {
 		for (Iterator<Missile> it = missiles.iterator(); it.hasNext();) {
 			Missile missile = it.next();
-			if (!hasHitAlien(missile)) {
+			if (!hasHitAlien(missile) && !isOutOfScreen(missile)) {
 				missile.moveForward();
 			} else {
-				it.remove();
+					it.remove();
 			}
 		}
 	}
@@ -176,14 +209,19 @@ public class GameScreen extends JPanel implements KeyListener {
 	private boolean hasHitAlien(Missile missile) {
 		int missileX = missile.getCoordinate().getX();
 		int missileY = missile.getCoordinate().getY();
-		for (Alien alien : aliens) {
-			if (missileX >= alien.getCoordinate().getX() && missileX <= (alien.getCoordinate().getX() + Constants.ALIEN_WIDTH)
+		for (Iterator<Alien> it = aliens.iterator(); it.hasNext();) {
+			Alien alien = it.next();
+			if (alien.isAlive() && missileX >= alien.getCoordinate().getX() && missileX <= (alien.getCoordinate().getX() + Constants.ALIEN_WIDTH)
 					&& missileY > alien.getCoordinate().getY() && missileY < (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT)) {
-				aliens.remove(alien);
+					it.remove();
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	private boolean isOutOfScreen(Missile missile) {
+		return (missile.getCoordinate().getY() + Constants.MISSILE_HEIGHT) < 0;
 	}
 	
 	private void loadAliens() {
@@ -223,7 +261,6 @@ public class GameScreen extends JPanel implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
-		System.out.println(key);
 		if (Constants.VALID_LEFT_KEYS.contains(key) && battleShip.canMoveLeft()) {
 			battleShip.moveLeft();
 			repaint();
@@ -235,6 +272,12 @@ public class GameScreen extends JPanel implements KeyListener {
 			int missileY = battleShip.getCoordinate().getY() - (Constants.MISSILE_HEIGHT);
 			missiles.add(new Missile(new Coordinate(missileX, missileY)));
 			repaint();
+		} else if (key == KeyEvent.VK_F11) {
+			alienSpeed -= Constants.ALIEN_SPEED_DELTA;
+			System.out.println("Increased Alien Speed to " + alienSpeed + "ms");
+		} else if (key == KeyEvent.VK_F10) {
+			alienSpeed += Constants.ALIEN_SPEED_DELTA;
+			System.out.println("Decreased Alien Speed to " + alienSpeed + "ms");
 		}
 	}
 
@@ -250,4 +293,7 @@ public class GameScreen extends JPanel implements KeyListener {
 		
 	}
 	
+	public GameState getGameState() {
+		return currState;
+	}
 }

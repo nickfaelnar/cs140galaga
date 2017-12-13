@@ -21,6 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import up.mscs.cs140.galaga.constants.Constants;
+import up.mscs.cs140.galaga.constants.GameState;
 import up.mscs.cs140.galaga.panels.GameScreen;
 import up.mscs.cs140.galaga.panels.InitScreen;
 

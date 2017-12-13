@@ -9,6 +9,5 @@ package up.mscs.cs140.galaga.constants;
  */
 public enum AlienState {
 	ALIVE,
-	DYING,
 	DEAD
 }

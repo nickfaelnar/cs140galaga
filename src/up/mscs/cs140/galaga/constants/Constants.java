@@ -26,6 +26,8 @@ public class Constants {
 	public static final int ALIEN_DELTA_X = 10;
 	public static final int ALIEN_DELTA_Y = 10;
 	public static final int ALIEN_INIT_SPEED = 200;
+	public static final int ALIEN_SPEED_DELTA = 25;
+	public static final int ALIEN_EXPLOSION_DURATION = 500;
 	
 	public static final String BATTLE_SHIP_SPRITE = "resources/fighter.gif";
 	public static final int BATTLE_SHIP_WIDTH = 50;
@@ -43,6 +45,8 @@ public class Constants {
 	public static final int MISSILE_INIT_SPEED = 50;
 	
 	public static final String EXPLOSION_SPRITE = "resources/explosion.gif";
+	
+	public static final int GAME_STATE_CHECK_INTERVAL = 500;
 	
 	public static final List<Integer> VALID_LEFT_KEYS = Arrays.asList(KeyEvent.VK_KP_LEFT, KeyEvent.VK_A);
 	public static final List<Integer> VALID_RIGHT_KEYS = Arrays.asList(KeyEvent.VK_KP_RIGHT, KeyEvent.VK_D);
