@@ -21,6 +21,10 @@ public abstract class GameObject {
 	public abstract void moveLeft();
 	
 	public abstract void moveRight();
+	
+	public abstract void moveForward();
+	
+	public abstract void moveBackward();
 
 	public Image getImagePath() {
 		return imagePath;

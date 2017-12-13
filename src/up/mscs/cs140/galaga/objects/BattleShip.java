@@ -32,6 +32,12 @@ public class BattleShip extends GameObject {
 		this.coordinate.setX(this.coordinate.getX() + this.deltaX);
 	}
 	
+	@Override
+	public void moveForward() {}
+
+	@Override
+	public void moveBackward() {}
+	
 	public boolean canMoveLeft() {
 		return (this.coordinate.getX() > 10);
 	}
@@ -39,6 +45,5 @@ public class BattleShip extends GameObject {
 	public boolean canMoveRight() {
 		return (this.coordinate.getX() < 740);
 	}
-
 
 }

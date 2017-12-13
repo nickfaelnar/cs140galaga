@@ -2,6 +2,7 @@ package up.mscs.cs140.galaga.objects;
 
 import javax.swing.ImageIcon;
 
+import up.mscs.cs140.galaga.constants.AlienState;
 import up.mscs.cs140.galaga.constants.Constants;
 import up.mscs.cs140.galaga.constants.Coordinate;
 import up.mscs.cs140.galaga.constants.GameObject;
@@ -10,6 +11,8 @@ import up.mscs.cs140.galaga.constants.GameObject;
  * Enemy Alien Object.
  */
 public class Alien extends GameObject {
+	
+	private AlienState currState = AlienState.ALIVE;
 	
 	public Alien(Coordinate coordinate) {
 		super(coordinate, Constants.ALIEN_DELTA_X, Constants.ALIEN_DELTA_Y);
@@ -32,9 +35,13 @@ public class Alien extends GameObject {
 		
 	}
 	
+	@Override
 	public void moveForward() {
 		this.coordinate.setY(this.coordinate.getY() + this.deltaY);
 	}
+	
+	@Override
+	public void moveBackward() {		}
 	
 	public boolean canMoveLeft() {
 		return (this.coordinate.getX() > 10);
@@ -42,6 +49,14 @@ public class Alien extends GameObject {
 	
 	public boolean canMoveRight() {
 		return (this.coordinate.getX() < 740);
+	}
+
+	public AlienState getCurrState() {
+		return currState;
+	}
+
+	public void setCurrState(AlienState currState) {
+		this.currState = currState;
 	}
 
 }
