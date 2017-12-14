@@ -39,7 +39,7 @@ public class GalagaGame extends JFrame implements KeyListener {
 		prepareGameScreen();
 		
 		setLayout(new BorderLayout());
-		setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
+		setSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
 		setVisible(true);
@@ -53,14 +53,14 @@ public class GalagaGame extends JFrame implements KeyListener {
 	public void prepareInitialScreen() {
 		initScreen = new InitScreen();
 		initScreen.setLayout(new BorderLayout());
-		initScreen.setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
+		initScreen.setSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
 		initScreen.setFocusable(false);
 	}
 	
 	public void prepareGameScreen() {
 		gameScreen = new GameScreen();
 		gameScreen.setLayout(new BorderLayout());
-		gameScreen.setSize(new Dimension(Constants.WIDTH, Constants.HEIGHT));
+		gameScreen.setSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
 		gameScreen.setFocusable(true);
 	}
 

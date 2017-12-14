@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -43,7 +42,6 @@ public class GameScreen extends JPanel implements KeyListener {
 	
 	Thread alienThread;
 	Thread missileThread;
-	Thread gameWatcher;
 	
 	public GameScreen() {
 		addKeyListener(this);
@@ -53,12 +51,11 @@ public class GameScreen extends JPanel implements KeyListener {
 		loadGameBoard();
 		
 		currState = GameState.ACTIVE;
-		currMovement = AlienMovement.LEFT;
+		currMovement = Constants.ALIEN_INIT_MOVEMENT;
 		prevSideMovement = currMovement;
 		
 		alienThread.start();
 		missileThread.start();
-		gameWatcher.start();
 	}
 	
 	
@@ -81,7 +78,6 @@ public class GameScreen extends JPanel implements KeyListener {
 	    
 	    prepareAlienThread();
 	    prepareMissileThread();
-	    prepareGameWatcher();
 	}
 	
 	private void prepareAlienThread() {
@@ -134,31 +130,29 @@ public class GameScreen extends JPanel implements KeyListener {
 		});
 	}
 	
-	private void prepareGameWatcher() {
-		gameWatcher = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while(true) {
-					try {
-						Thread.sleep(Constants.GAME_STATE_CHECK_INTERVAL);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					if (hasGameEnded()) {
-						currState = GameState.END;
-						System.out.println("You killed all the aliens! Hoorah!");
-						break;
-					}
-				}
-			}
+	private void checkAliens() {
+		if (aliens.isEmpty()) {
+			System.out.println("You killed all the aliens! Hoorah!");
+			endGame();
 			
-		});
+//			currState = GameState.REPEAT;
+//			try {
+//				Thread.sleep(2000);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//			alienSpeed -= Constants.ALIEN_SPEED_DELTA;
+//			missileSpeed -= Constants.MISSILE_SPEED_DELTA;
+//			battleShip.setDeltaX(battleShip.getDeltaX() - Constants.BATTLE_SHIP_SPEED_DELTA);
+//			
+//			startGame();
+		}
 	}
 	
-	private boolean hasGameEnded() {
-		return aliens.isEmpty();
+	private void endGame() {
+		currState = GameState.END;
+		System.out.println("Game Ended");
 	}
-	
 	private boolean canAlienMoveToSide(AlienMovement movement) {
 		synchronized (aliens) {
 			for (Alien alien : aliens) {
@@ -172,21 +166,39 @@ public class GameScreen extends JPanel implements KeyListener {
 	}
 	
 	private void moveAliens(AlienMovement alienMovement) {
+		boolean toEndGame = false;
 		synchronized (aliens) {
 			for (Alien alien : aliens) {
-				switch (alienMovement) {
-				case LEFT:
-					alien.moveLeft();
-					break;
-				case RIGHT:
-					alien.moveRight();
-					break;
-				case FORWARD:
-					alien.moveForward();
+				if (!hasAlienReachedEnd(alien) && !hasHitBattleShip(alien)) {
+					switch (alienMovement) {
+						case LEFT:
+							alien.moveLeft();
+							break;
+						case RIGHT:
+							alien.moveRight();
+							break;
+						case FORWARD:
+							alien.moveForward();
+							break;
+					}
+				} else {
+					toEndGame = true;
+					if (hasAlienReachedEnd(alien)) { 
+						System.out.println("You failed to stop all aliens!");
+					} else if (hasHitBattleShip(alien)) {
+						System.out.println("You've been hit!");
+						System.out.println(battleShip.getCoordinate().toString());
+						System.out.println(alien.getCoordinate().toString());
+					}
 					break;
 				}
 			}
 		}
+		
+		if (toEndGame) {
+			endGame();
+		}
+		
 	}
 	
 	private void moveMissilesForward() {
@@ -197,7 +209,8 @@ public class GameScreen extends JPanel implements KeyListener {
 			} else {
 				synchronized (missiles) {
 					it.remove();
-				}			}
+				}			
+			}
 		}
 	}
 	
@@ -210,11 +223,22 @@ public class GameScreen extends JPanel implements KeyListener {
 					&& missileY > alien.getCoordinate().getY() && missileY < (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT)) {
 					synchronized (aliens) {
 						it.remove();
+						checkAliens();
 					}
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	private boolean hasAlienReachedEnd(Alien alien) {
+		return alien.isAlive() && (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT) >= Constants.WINDOW_HEIGHT;
+	}
+	
+	private boolean hasHitBattleShip(Alien alien) {
+		return alien.isAlive() 
+				&& (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT) >= battleShip.getCoordinate().getY() && (alien.getCoordinate().getY() + Constants.ALIEN_HEIGHT) <= (battleShip.getCoordinate().getY() + Constants.BATTLE_SHIP_HEIGHT)
+				&& alien.getCoordinate().getX() >= (battleShip.getCoordinate().getX() + 20) && alien.getCoordinate().getX() >= (battleShip.getCoordinate().getX() + Constants.BATTLE_SHIP_WIDTH - 20);
 	}
 	
 	private boolean isOutOfScreen(Missile missile) {
@@ -242,7 +266,7 @@ public class GameScreen extends JPanel implements KeyListener {
 	@Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(bgImage, 0, 0, Constants.WIDTH, Constants.HEIGHT, this);
+        g.drawImage(bgImage, 0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT, this);
         
     	g.drawImage(battleShip.getImagePath(), battleShip.getCoordinate().getX(), battleShip.getCoordinate().getY(), Constants.BATTLE_SHIP_WIDTH, Constants.BATTLE_SHIP_HEIGHT, this);
         
@@ -262,6 +286,7 @@ public class GameScreen extends JPanel implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
+		System.out.println(key);
 		if (Constants.VALID_LEFT_KEYS.contains(key) && battleShip.canMoveLeft()) {
 			battleShip.moveLeft();
 			repaint();
@@ -281,6 +306,7 @@ public class GameScreen extends JPanel implements KeyListener {
 			System.out.println("Decreased Alien Speed to " + alienSpeed + "ms");
 		}
 	}
+	
 
 	@Override
 	public void keyReleased(KeyEvent e) {}

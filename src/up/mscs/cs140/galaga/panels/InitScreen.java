@@ -32,8 +32,8 @@ public class InitScreen extends JPanel {
 	@Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(bgImage, 0, 0, Constants.WIDTH, Constants.HEIGHT, this);
-        g.drawImage(titleImage, 0, 0, Constants.WIDTH, Constants.HEIGHT, this);
+        g.drawImage(bgImage, 0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT, this);
+        g.drawImage(titleImage, 0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT, this);
     }
 
 }
